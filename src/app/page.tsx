@@ -166,51 +166,95 @@ export default function Home() {
     let roadmapTrigger: any;
     const timelineRow = timelineRowRef.current;
     if (roadmapSectionRef.current && clipRectRef.current && timelineRow) {
+      const isDesktop = window.innerWidth >= 1024; // lg breakpoint
+
       // Setup initial values
-      gsap.set(clipRectRef.current, { attr: { width: 250 } });
+      gsap.set(clipRectRef.current, { attr: { width: 125 } });
       const nodes = roadmapSectionRef.current.querySelectorAll(".roadmap-node");
       gsap.set(nodes, { opacity: 0.4, scale: 0.9, y: 0 });
       
       // Active node 1 initially
       gsap.set(nodes[0], { opacity: 1, scale: 1 });
 
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: roadmapSectionRef.current,
-          start: "top top",
-          end: () => `+=${timelineRow.scrollWidth - window.innerWidth + 650}`,
-          pin: true,
-          scrub: 0.1,
-          invalidateOnRefresh: true,
-        }
-      });
+      if (isDesktop) {
+        // ON DESKTOP: Stationary layout. Section pins, line draws, cards stay centered in columns.
+        gsap.set(timelineRow, { x: 0 });
 
-      // Translate the row horizontally based on its total scrollable width - finish at 0.8
-      tl.to(timelineRow, {
-        x: () => -(timelineRow.scrollWidth - window.innerWidth + 80),
-        ease: "none",
-        duration: 0.8,
-      }, 0);
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: roadmapSectionRef.current,
+            start: "top top",
+            end: "+=1000",
+            pin: true,
+            scrub: 0.1,
+            invalidateOnRefresh: true,
+          }
+        });
 
-      // Draw the connecting line - finish at 0.8
-      tl.to(clipRectRef.current, {
-        attr: { width: 1000 },
-        ease: "none",
-        duration: 0.8,
-      }, 0);
+        // Draw the line from Phase 1 center (125) to Phase 4 center (875)
+        tl.to(clipRectRef.current, {
+          attr: { width: 900 },
+          ease: "none",
+          duration: 0.8,
+        }, 0);
 
-      // Sequentially activate nodes
-      tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.2)
-        .to(nodes[1], { scale: 1, duration: 0.05 }, 0.3)
-        .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.45)
-        .to(nodes[2], { scale: 1, duration: 0.05 }, 0.55)
-        .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.7)
-        .to(nodes[3], { scale: 1, duration: 0.05 }, 0.8);
+        // Sequentially activate nodes:
+        // Phase 2 is reached at 33.3% of the draw distance (0.33 * 0.8 = 0.27s)
+        tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.22)
+          .to(nodes[1], { scale: 1, duration: 0.05 }, 0.32)
+          
+          // Phase 3 is reached at 66.6% of the draw distance (0.66 * 0.8 = 0.53s)
+          .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.48)
+          .to(nodes[2], { scale: 1, duration: 0.05 }, 0.58)
+          
+          // Phase 4 is reached at 100% of the draw distance (1.0 * 0.8 = 0.8s)
+          .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.7)
+          .to(nodes[3], { scale: 1, duration: 0.05 }, 0.8);
 
-      // Add a 20% scroll-holding space at the end so the user can look at Phase 4 fully complete before unpinning
-      tl.to({}, { duration: 0.2 }, 0.8);
+        // Hold space at the end
+        tl.to({}, { duration: 0.2 }, 0.8);
 
-      roadmapTrigger = tl;
+        roadmapTrigger = tl;
+      } else {
+        // ON MOBILE: Sliding layout. Section pins, cards slide to the left sequentially.
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: roadmapSectionRef.current,
+            start: "top top",
+            end: () => `+=${timelineRow.scrollWidth - window.innerWidth + 400}`,
+            pin: true,
+            scrub: 0.1,
+            invalidateOnRefresh: true,
+          }
+        });
+
+        // Translate the row horizontally
+        tl.to(timelineRow, {
+          x: () => -(timelineRow.scrollWidth - window.innerWidth + 80),
+          ease: "none",
+          duration: 0.8,
+        }, 0);
+
+        // Draw the line
+        tl.to(clipRectRef.current, {
+          attr: { width: 900 },
+          ease: "none",
+          duration: 0.8,
+        }, 0);
+
+        // Sequentially activate nodes
+        tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.2)
+          .to(nodes[1], { scale: 1, duration: 0.05 }, 0.3)
+          .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.45)
+          .to(nodes[2], { scale: 1, duration: 0.05 }, 0.55)
+          .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.7)
+          .to(nodes[3], { scale: 1, duration: 0.05 }, 0.8);
+
+        // Hold space
+        tl.to({}, { duration: 0.2 }, 0.8);
+
+        roadmapTrigger = tl;
+      }
     }
 
     // 4. Social Section ScrollTrigger
@@ -598,7 +642,7 @@ export default function Home() {
         <div className="w-full overflow-hidden px-6 md:px-12 lg:px-24 z-10">
           
           {/* Timeline sliding row */}
-          <div ref={timelineRowRef} className="flex flex-row items-center gap-16 md:gap-32 relative py-8 w-max pr-[40vw]">
+          <div ref={timelineRowRef} className="flex flex-row lg:grid lg:grid-cols-4 items-center justify-between relative py-8 w-max pr-[40vw] lg:w-full lg:pr-0 gap-16 lg:gap-0">
             
             {/* Connecting Dashed SVG Line */}
             <svg viewBox="0 0 1000 200" className="absolute top-[80px] left-0 w-full z-0 select-none pointer-events-none" fill="none">
@@ -621,7 +665,7 @@ export default function Home() {
 
             {/* Nodes */}
             {/* Phase 1 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] flex-shrink-0 flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap1.png" 
@@ -641,7 +685,7 @@ export default function Home() {
             </div>
 
             {/* Phase 2 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] flex-shrink-0 flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap2.png" 
@@ -661,7 +705,7 @@ export default function Home() {
             </div>
 
             {/* Phase 3 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] flex-shrink-0 flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap3.png" 
@@ -681,7 +725,7 @@ export default function Home() {
             </div>
 
             {/* Phase 4 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] flex-shrink-0 flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap4.png" 
