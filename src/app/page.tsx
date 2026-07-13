@@ -50,6 +50,9 @@ export default function Home() {
   const clipRectRef = useRef<SVGRectElement>(null);
   const timelineRowRef = useRef<HTMLDivElement>(null);
 
+  const mobileTimelineRef = useRef<HTMLDivElement>(null);
+  const mobileClipRectRef = useRef<SVGRectElement>(null);
+
   const socialSectionRef = useRef<HTMLDivElement>(null);
   const socialContentRef = useRef<HTMLDivElement>(null);
 
@@ -162,23 +165,20 @@ export default function Home() {
       });
     }
 
-    // 3. Roadmap Pinning & Clipping ScrollTrigger (Mobile & Desktop)
+    // 3. Desktop Roadmap Pinning & Clipping ScrollTrigger
     let roadmapTrigger: any;
     const timelineRow = timelineRowRef.current;
     if (roadmapSectionRef.current && clipRectRef.current && timelineRow) {
       const isDesktop = window.innerWidth >= 1024; // lg breakpoint
 
-      // Setup initial values
-      gsap.set(clipRectRef.current, { attr: { width: 125 } });
-      const nodes = roadmapSectionRef.current.querySelectorAll(".roadmap-node");
-      gsap.set(nodes, { opacity: 0.4, scale: 0.9, y: 0 });
-      
-      // Active node 1 initially
-      gsap.set(nodes[0], { opacity: 1, scale: 1 });
-
       if (isDesktop) {
-        // ON DESKTOP: Stationary layout. Section pins, line draws, cards stay centered in columns.
-        gsap.set(timelineRow, { x: 0 });
+        // Setup initial values
+        gsap.set(clipRectRef.current, { attr: { width: 125 } });
+        const nodes = roadmapSectionRef.current.querySelectorAll(".roadmap-node");
+        gsap.set(nodes, { opacity: 0.4, scale: 0.9, y: 0 });
+        
+        // Active node 1 initially
+        gsap.set(nodes[0], { opacity: 1, scale: 1 });
 
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -215,49 +215,47 @@ export default function Home() {
         tl.to({}, { duration: 0.2 }, 0.8);
 
         roadmapTrigger = tl;
-      } else {
-        // ON MOBILE: Sliding layout. Section pins, cards slide to the left sequentially.
-        const tl = gsap.timeline({
-          scrollTrigger: {
-            trigger: roadmapSectionRef.current,
-            start: "top top",
-            end: () => `+=${timelineRow.scrollWidth - window.innerWidth + 400}`,
-            pin: true,
-            scrub: 0.1,
-            invalidateOnRefresh: true,
-          }
-        });
-
-        // Translate the row horizontally
-        tl.to(timelineRow, {
-          x: () => -(timelineRow.scrollWidth - window.innerWidth + 80),
-          ease: "none",
-          duration: 0.8,
-        }, 0);
-
-        // Draw the line
-        tl.to(clipRectRef.current, {
-          attr: { width: 900 },
-          ease: "none",
-          duration: 0.8,
-        }, 0);
-
-        // Sequentially activate nodes
-        tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.2)
-          .to(nodes[1], { scale: 1, duration: 0.05 }, 0.3)
-          .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.45)
-          .to(nodes[2], { scale: 1, duration: 0.05 }, 0.55)
-          .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.7)
-          .to(nodes[3], { scale: 1, duration: 0.05 }, 0.8);
-
-        // Hold space
-        tl.to({}, { duration: 0.2 }, 0.8);
-
-        roadmapTrigger = tl;
       }
     }
 
-    // 4. Social Section ScrollTrigger
+    // 4. Mobile Roadmap ScrollTrigger (No pinning!)
+    let mobileRoadmapTrigger: any;
+    const mobileTimeline = mobileTimelineRef.current;
+    const mobileClipRect = mobileClipRectRef.current;
+    if (mobileTimeline && mobileClipRect) {
+      const mobileNodes = mobileTimeline.querySelectorAll(".roadmap-node-mobile");
+      gsap.set(mobileClipRect, { attr: { height: 0 } });
+      gsap.set(mobileNodes, { opacity: 0.3, scale: 0.95 });
+      gsap.set(mobileNodes[0], { opacity: 1, scale: 1 });
+
+      const tlMobile = gsap.timeline({
+        scrollTrigger: {
+          trigger: mobileTimeline,
+          start: "top 70%", // start drawing when top of vertical list is 70% down the screen
+          end: "bottom 80%",
+          scrub: true,
+        }
+      });
+
+      // Animate vertical clip rect height from 0 to 1000
+      tlMobile.to(mobileClipRect, {
+        attr: { height: 1000 },
+        ease: "none",
+        duration: 1.0,
+      }, 0);
+
+      // Light up the cards as they are reached by the vertical line
+      tlMobile.to(mobileNodes[1], { opacity: 1, scale: 1.05, duration: 0.15 }, 0.25)
+        .to(mobileNodes[1], { scale: 1, duration: 0.05 }, 0.4)
+        .to(mobileNodes[2], { opacity: 1, scale: 1.05, duration: 0.15 }, 0.55)
+        .to(mobileNodes[2], { scale: 1, duration: 0.05 }, 0.7)
+        .to(mobileNodes[3], { opacity: 1, scale: 1.05, duration: 0.15 }, 0.8)
+        .to(mobileNodes[3], { scale: 1, duration: 0.05 }, 0.95);
+
+      mobileRoadmapTrigger = tlMobile;
+    }
+
+    // 5. Social Section ScrollTrigger
     let socialTrigger: any;
     if (socialContentRef.current && socialSectionRef.current) {
       gsap.set(socialContentRef.current, { x: 50, opacity: 0 });
@@ -299,6 +297,7 @@ export default function Home() {
       if (frogTrigger) frogTrigger.kill();
       if (tokenomicsTrigger) tokenomicsTrigger.kill();
       if (roadmapTrigger) roadmapTrigger.kill();
+      if (mobileRoadmapTrigger) mobileRoadmapTrigger.kill();
       if (socialTrigger) socialTrigger.kill();
     };
   }, []);
@@ -628,21 +627,17 @@ export default function Home() {
 
         </div>
 
-      </section>
-
-      {/* 4. Roadmap Section */}
-      <section ref={roadmapSectionRef} className="w-full min-h-screen md:h-screen py-16 md:py-0 bg-[#E4FF70] border-t-4 border-black flex flex-col justify-center relative overflow-hidden select-none">
+      </section>      {/* 4. Roadmap Section */}
+      <section ref={roadmapSectionRef} className="w-full min-h-screen lg:h-screen py-16 lg:py-0 bg-[#E4FF70] border-t-4 border-black flex flex-col justify-center relative overflow-hidden select-none">
         
         {/* Title */}
-        <h2 className="font-banzai text-4xl md:text-6xl text-black font-black uppercase text-center mb-6 md:mb-12 z-20">
+        <h2 className="font-banzai text-4xl md:text-6xl text-black font-black uppercase text-center mb-10 md:mb-16 z-20">
           ROADMAP
         </h2>
 
-        {/* Timeline outer viewport */}
-        <div className="w-full overflow-hidden px-6 md:px-12 lg:px-24 z-10">
-          
-          {/* Timeline sliding row */}
-          <div ref={timelineRowRef} className="flex flex-row lg:grid lg:grid-cols-4 items-center justify-between relative py-8 w-max pr-[40vw] lg:w-full lg:pr-0 gap-16 lg:gap-0">
+        {/* Desktop View: Pinned Horizontal SVG Timeline (hidden on mobile) */}
+        <div className="hidden lg:block w-full max-w-[95%] xl:max-w-[1400px] mx-auto z-10 px-6 md:px-12 lg:px-24">
+          <div ref={timelineRowRef} className="grid grid-cols-4 relative py-8 w-full gap-0">
             
             {/* Connecting Dashed SVG Line */}
             <svg viewBox="0 0 1000 200" className="absolute top-[80px] left-0 w-full z-0 select-none pointer-events-none" fill="none">
@@ -665,7 +660,7 @@ export default function Home() {
 
             {/* Nodes */}
             {/* Phase 1 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-full flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap1.png" 
@@ -685,7 +680,7 @@ export default function Home() {
             </div>
 
             {/* Phase 2 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-full flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap2.png" 
@@ -705,7 +700,7 @@ export default function Home() {
             </div>
 
             {/* Phase 3 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-full flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap3.png" 
@@ -725,7 +720,7 @@ export default function Home() {
             </div>
 
             {/* Phase 4 */}
-            <div className="roadmap-node w-[280px] sm:w-[320px] lg:w-full flex-shrink-0 lg:flex-shrink flex flex-col items-center text-center z-10">
+            <div className="roadmap-node w-full flex flex-col items-center text-center z-10">
               <div className="h-36 md:h-44 flex items-center justify-center mb-6">
                 <img 
                   src="/assets/roadmap4.png" 
@@ -740,6 +735,91 @@ export default function Home() {
                 Rule
               </h3>
               <p className="font-body font-bold text-sm md:text-base text-black/75 mt-2 max-w-[200px] leading-snug">
+                Hoppy takes over the chart
+              </p>
+            </div>
+
+          </div>
+        </div>
+
+        {/* Mobile View: Static Vertical Timeline (hidden on desktop) */}
+        <div ref={mobileTimelineRef} className="block lg:hidden relative w-full max-w-md mx-auto z-10 px-4">
+          
+          {/* Vertical Connecting Dashed Line */}
+          <svg viewBox="0 0 10 1000" className="absolute top-[60px] bottom-[100px] left-1/2 -translate-x-1/2 w-[4px] h-[calc(100%-160px)] z-0 select-none pointer-events-none" fill="none" preserveAspectRatio="none">
+            <defs>
+              <clipPath id="roadmap-clip-mobile">
+                <rect ref={mobileClipRectRef} x="0" y="0" width="10" height="0" />
+              </clipPath>
+            </defs>
+            <line 
+              x1="5" 
+              y1="0" 
+              x2="5" 
+              y2="1000" 
+              stroke="black" 
+              strokeWidth="4" 
+              strokeDasharray="12 8" 
+              clipPath="url(#roadmap-clip-mobile)"
+              className="animate-dash"
+            />
+          </svg>
+
+          {/* Vertical Nodes Stack */}
+          <div className="flex flex-col gap-16 relative w-full items-center">
+            
+            {/* Phase 1 */}
+            <div className="roadmap-node-mobile flex flex-col items-center text-center z-10">
+              <div className="h-32 flex items-center justify-center mb-4">
+                <img src="/assets/roadmap1.png" alt="Phase 1" className="h-full w-auto object-contain" />
+              </div>
+              <span className="bg-[#BFFE3B] border-2 border-black text-black font-banzai font-black text-xs px-4 py-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+                Phase 1
+              </span>
+              <h3 className="font-banzai text-2xl text-black font-black mt-3">Hatch</h3>
+              <p className="font-body font-bold text-sm text-black/75 mt-1 max-w-[200px]">
+                Launch & Build our pond
+              </p>
+            </div>
+
+            {/* Phase 2 */}
+            <div className="roadmap-node-mobile flex flex-col items-center text-center z-10">
+              <div className="h-32 flex items-center justify-center mb-4">
+                <img src="/assets/roadmap2.png" alt="Phase 2" className="h-full w-auto object-contain" />
+              </div>
+              <span className="bg-[#BFFE3B] border-2 border-black text-black font-banzai font-black text-xs px-4 py-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+                Phase 2
+              </span>
+              <h3 className="font-banzai text-2xl text-black font-black mt-3">Grow</h3>
+              <p className="font-body font-bold text-sm text-black/75 mt-1 max-w-[200px]">
+                Spread the word & build the army
+              </p>
+            </div>
+
+            {/* Phase 3 */}
+            <div className="roadmap-node-mobile flex flex-col items-center text-center z-10">
+              <div className="h-32 flex items-center justify-center mb-4">
+                <img src="/assets/roadmap3.png" alt="Phase 3" className="h-full w-auto object-contain" />
+              </div>
+              <span className="bg-[#BFFE3B] border-2 border-black text-black font-banzai font-black text-xs px-4 py-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+                Phase 3
+              </span>
+              <h3 className="font-banzai text-2xl text-black font-black mt-3">Fly</h3>
+              <p className="font-body font-bold text-sm text-black/75 mt-1 max-w-[200px]">
+                More listings, more visibility
+              </p>
+            </div>
+
+            {/* Phase 4 */}
+            <div className="roadmap-node-mobile flex flex-col items-center text-center z-10">
+              <div className="h-32 flex items-center justify-center mb-4">
+                <img src="/assets/roadmap4.png" alt="Phase 4" className="h-full w-auto object-contain" />
+              </div>
+              <span className="bg-[#BFFE3B] border-2 border-black text-black font-banzai font-black text-xs px-4 py-1.5 rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] select-none">
+                Phase 4
+              </span>
+              <h3 className="font-banzai text-2xl text-black font-black mt-3">Rule</h3>
+              <p className="font-body font-bold text-sm text-black/75 mt-1 max-w-[200px]">
                 Hoppy takes over the chart
               </p>
             </div>
