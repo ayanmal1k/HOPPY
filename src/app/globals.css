@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+@font-face {
+  font-family: 'BanzaiBros';
+  src: url('/assets/font/Banzai Bros W01 Regular/Banzai Bros W01 Regular.otf') format('opentype'),
+       url('/assets/font/Banzai Bros W01 Regular/Banzai Bros W01 Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --color-background: #BFFE3B;
+  --color-foreground: #000000;
+  --color-primary: #000000;
+  --color-secondary: #1E1E1E;
+  
+  --font-banzai: 'BanzaiBros', sans-serif;
+  --font-display: var(--font-syne), sans-serif;
+  --font-body: var(--font-outfit), sans-serif;
+}
+
+/* Base resets & layout variables */
+:root {
+  --space-unit: 8px;
+  --space-xs: calc(var(--space-unit) * 1);   /* 8px */
+  --space-sm: calc(var(--space-unit) * 2);   /* 16px */
+  --space-md: calc(var(--space-unit) * 3);   /* 24px */
+  --space-lg: calc(var(--space-unit) * 4);   /* 32px */
+  --space-xl: calc(var(--space-unit) * 6);   /* 48px */
+  --space-xxl: calc(var(--space-unit) * 8);  /* 64px */
+  --space-huge: calc(var(--space-unit) * 12);/* 96px */
+}
+
+/* Base Body Styles */
+html {
+  background-color: #BFFE3B;
+  color: #000000;
+  font-family: var(--font-body);
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #000000 #BFFE3B;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #BFFE3B;
+}
+::-webkit-scrollbar-thumb {
+  background: #000000;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #1E1E1E;
+}
+
+/* Lenis Integration */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  scroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Accessible outline states */
+*:focus-visible {
+  outline: 2px solid #000000;
+  outline-offset: 4px;
+}
+
+/* Typography Helper Classes */
+.font-banzai {
+  font-family: var(--font-banzai);
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-body {
+  font-family: var(--font-body);
+}
+
+/* Custom animation for float effect on background illustration */
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes stroke-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.animate-dash {
+  animation: stroke-dash 1.5s linear infinite;
+}
