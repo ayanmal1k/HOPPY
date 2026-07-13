@@ -178,29 +178,37 @@ export default function Home() {
         scrollTrigger: {
           trigger: roadmapSectionRef.current,
           start: "top top",
-          end: () => `+=${timelineRow.scrollWidth - window.innerWidth + 400}`,
+          end: () => `+=${timelineRow.scrollWidth - window.innerWidth + 650}`,
           pin: true,
-          scrub: 0.5,
+          scrub: 0.1,
           invalidateOnRefresh: true,
         }
       });
 
-      // Translate the row horizontally based on its total scrollable width
+      // Translate the row horizontally based on its total scrollable width - finish at 0.8
       tl.to(timelineRow, {
-        x: () => -(timelineRow.scrollWidth - window.innerWidth + 100),
+        x: () => -(timelineRow.scrollWidth - window.innerWidth + 80),
         ease: "none",
+        duration: 0.8,
       }, 0);
 
-      // Draw the connecting line
-      tl.to(clipRectRef.current, { attr: { width: 1000 }, ease: "none" }, 0);
+      // Draw the connecting line - finish at 0.8
+      tl.to(clipRectRef.current, {
+        attr: { width: 1000 },
+        ease: "none",
+        duration: 0.8,
+      }, 0);
 
       // Sequentially activate nodes
-      tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.15 }, 0.2)
-        .to(nodes[1], { scale: 1, duration: 0.1 }, 0.35)
-        .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.15 }, 0.5)
-        .to(nodes[2], { scale: 1, duration: 0.1 }, 0.65)
-        .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.15 }, 0.8)
-        .to(nodes[3], { scale: 1, duration: 0.1 }, 0.95);
+      tl.to(nodes[1], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.2)
+        .to(nodes[1], { scale: 1, duration: 0.05 }, 0.3)
+        .to(nodes[2], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.45)
+        .to(nodes[2], { scale: 1, duration: 0.05 }, 0.55)
+        .to(nodes[3], { opacity: 1, scale: 1.1, duration: 0.1 }, 0.7)
+        .to(nodes[3], { scale: 1, duration: 0.05 }, 0.8);
+
+      // Add a 20% scroll-holding space at the end so the user can look at Phase 4 fully complete before unpinning
+      tl.to({}, { duration: 0.2 }, 0.8);
 
       roadmapTrigger = tl;
     }
