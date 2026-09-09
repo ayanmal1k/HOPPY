@@ -3,6 +3,7 @@ import { Syne, Outfit } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
 import BackgroundCanvas from "@/components/BackgroundCanvas";
+import Script from "next/script";
 
 const syne = Syne({
   subsets: ["latin"],
@@ -62,6 +63,13 @@ export default function RootLayout({
         <SmoothScroll>
           {children}
         </SmoothScroll>
+
+        {/* Zander AI Widget */}
+        <Script
+          src="https://cdn.zanderio.ai/widget/loader.js"
+          data-id="wdg_T6oUT9E3TruoChxVAHdXokur"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
